@@ -92,7 +92,7 @@ export class VRMExpression extends THREE.Object3D {
    */
   public get outputWeight(): number {
     if (this.isBinary) {
-      return this.weight >= 0.5 ? 1.0 : 0.0;
+      return this.weight > 0.5 ? 1.0 : 0.0;
     }
 
     return this.weight;
