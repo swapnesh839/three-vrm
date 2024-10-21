@@ -1,4 +1,3 @@
-import * as THREE from 'three';
 import { VRMExpression } from '../VRMExpression';
 import { VRMExpressionBind } from '../VRMExpressionBind';
 
