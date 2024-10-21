@@ -39,10 +39,10 @@ describe('VRMExpression', () => {
       expect(expression.outputWeight).toBe(1.0);
     });
 
-    it('returns 1.0 if the expression is binary and the weight is exactly 0.5', () => {
+    it('returns 0.0 if the expression is binary and the weight is exactly 0.5', () => {
       expression.isBinary = true;
       expression.weight = 0.5;
-      expect(expression.outputWeight).toBe(1.0);
+      expect(expression.outputWeight).toBe(0.0);
     });
   });
 
@@ -138,7 +138,7 @@ describe('VRMExpression', () => {
       expect(bind.weight).toBe(1.0);
     });
 
-    it('applies the 1.0 if the expression is binary and the weight is exactly 0.5', () => {
+    it('applies the 0.0 if the expression is binary and the weight is exactly 0.5', () => {
       expression.isBinary = true;
 
       const bind = new VRMExpressionMockBind();
@@ -147,7 +147,7 @@ describe('VRMExpression', () => {
       expression.weight = 0.5;
       expression.applyWeight();
 
-      expect(bind.weight).toBe(1.0);
+      expect(bind.weight).toBe(0.0);
     });
 
     it('applies the weight with the override multiplier', () => {
