@@ -15,6 +15,12 @@ export declare class VRMSpringBoneLoaderPlugin implements GLTFLoaderPlugin {
      * If `renderOrder` is set to the root, helpers will copy the same `renderOrder` .
      */
     colliderHelperRoot?: THREE.Object3D;
+    /**
+     * If true, load colliders defined in `VRMC_springBone_extended_collider`.
+     * Set to `false` to disable loading extended colliders and use the fallback behavior.
+     * `true` by default.
+     */
+    useExtendedColliders: boolean;
     readonly parser: GLTFParser;
     get name(): string;
     constructor(parser: GLTFParser, options?: VRMSpringBoneLoaderPluginOptions);
@@ -31,4 +37,5 @@ export declare class VRMSpringBoneLoaderPlugin implements GLTFLoaderPlugin {
     private _importJoint;
     private _importSphereCollider;
     private _importCapsuleCollider;
+    private _importPlaneCollider;
 }

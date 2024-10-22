@@ -65,7 +65,7 @@ export declare class MToonNodeMaterial extends THREE.NodeMaterial {
     setup(builder: THREE.NodeBuilder): void;
     setupDiffuseColor(builder: THREE.NodeBuilder): void;
     setupVariants(): void;
-    setupNormal(builder: THREE.NodeBuilder): void;
+    setupNormal(builder: THREE.NodeBuilder): THREE.ShaderNodeObject<THREE.Node>;
     setupLighting(builder: THREE.NodeBuilder): THREE.Node;
     setupOutput(builder: THREE.NodeBuilder, outputNode: THREE.ShaderNodeObject<THREE.Node>): THREE.ShaderNodeObject<THREE.Node>;
     setupPosition(builder: THREE.NodeBuilder): THREE.ShaderNodeObject<THREE.Node>;

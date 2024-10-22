@@ -9,6 +9,10 @@ export declare class VRMExpression extends THREE.Object3D {
     expressionName: string;
     /**
      * The current weight of the expression.
+     *
+     * You usually want to set the weight via {@link VRMExpressionManager.setValue}.
+     *
+     * It might also be controlled by the Three.js animation system.
      */
     weight: number;
     /**
@@ -44,6 +48,10 @@ export declare class VRMExpression extends THREE.Object3D {
      * `0.0` == no override at all, `1.0` == completely block the expressions.
      */
     get overrideMouthAmount(): number;
+    /**
+     * An output weight of this expression, considering the {@link isBinary}.
+     */
+    get outputWeight(): number;
     constructor(expressionName: string);
     addBind(bind: VRMExpressionBind): void;
     /**

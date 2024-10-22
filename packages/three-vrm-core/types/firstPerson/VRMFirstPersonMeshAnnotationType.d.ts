@@ -4,4 +4,4 @@ export declare const VRMFirstPersonMeshAnnotationType: {
     readonly ThirdPersonOnly: "thirdPersonOnly";
     readonly FirstPersonOnly: "firstPersonOnly";
 };
-export type VRMFirstPersonMeshAnnotationType = typeof VRMFirstPersonMeshAnnotationType[keyof typeof VRMFirstPersonMeshAnnotationType];
+export type VRMFirstPersonMeshAnnotationType = (typeof VRMFirstPersonMeshAnnotationType)[keyof typeof VRMFirstPersonMeshAnnotationType];

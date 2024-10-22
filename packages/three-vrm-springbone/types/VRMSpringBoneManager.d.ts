@@ -3,6 +3,7 @@ import type { VRMSpringBoneCollider } from './VRMSpringBoneCollider';
 import type { VRMSpringBoneColliderGroup } from './VRMSpringBoneColliderGroup';
 export declare class VRMSpringBoneManager {
     private _joints;
+    private _hasWarnedCircularDependency;
     get joints(): Set<VRMSpringBoneJoint>;
     /**
      * @deprecated Use {@link joints} instead.
@@ -28,7 +29,7 @@ export declare class VRMSpringBoneManager {
      * Update a spring bone.
      * If there are other spring bone that are dependant, it will try to update them recursively.
      * It updates matrixWorld of all ancestors and myself.
-     * It might throw an error if there are circular dependencies.
+     * It might log an warning message if there are any circular dependencies.
      *
      * Intended to be used in {@link update} and {@link _processSpringBone} itself recursively.
      *
