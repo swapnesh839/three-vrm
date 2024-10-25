@@ -50,7 +50,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 
 I have already used this in the example above but there is a utility function called `VRMUtils.rotateVRM0`.
 
-In VRM1.0, the facing direction of the model has been changed from Y- to Y+.
+In VRM1.0, the facing direction of the model has been changed from Z- to Z+.
 
 `VRMUtils.rotateVRM0` rotates the VRM model if the VRM is VRM0.0 and faces backward.
 
