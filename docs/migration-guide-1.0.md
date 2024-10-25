@@ -50,7 +50,7 @@ renderer.outputEncoding = THREE.sRGBEncoding;
 
 I have already used this in the example above but there is a utility function called `VRMUtils.rotateVRM0`.
 
-In VRM1.0, the facing direction of the model has been changed from Y- to Y+.
+In VRM1.0, the facing direction of the model has been changed from Z- to Z+.
 
 `VRMUtils.rotateVRM0` rotates the VRM model if the VRM is VRM0.0 and faces backward.
 
@@ -152,26 +152,20 @@ If public demand is high enough, we will consider having a utility function that
 ### Normalized Human Bones
 
 From VRM1.0, VRM models can have “non-normalized” orientations for each human bone.
-
 Due to this change, we introduce a feature to access “normalized” human bones to maintain compatibility between models with different bone orientations.
-
 Normalized human bones have identity orientation (`[0, 0, 0; 1]` in quaternion) in its rest pose.
 
 Almost all members of `VRMHumanoid` existed in v0.x were deprecated.
-
 We now have members to access raw (original) human bones and normalized human bones instead.
-
 For example, you can get a `THREE.Object3D` of a human bone by either `VRMHumanoid.getRawBoneNode` or `VRMHumanoid.getNormalizedBoneNode`.
 
 Normalized human bones are proxy objects of raw human bones.
-
 Operations applied to normalized human bones are automatically synced to raw human bones upon `VRM.update` or `VRMHumanoid.update`.
-
 If you don’t need this behavior, set `VRMHumanoid.autoUpdateHumanBones` to `false`.
 
-See the example: `TODO`
+See the example: https://github.com/pixiv/three-vrm/blob/bb91a237a743c31dfa3f05ccb7a285469d54bd30/packages/three-vrm/examples/bones.html#L124-L126
 
-See the documentation: `TODO`
+See the documentation: https://pixiv.github.io/three-vrm/packages/three-vrm/docs/classes/VRMHumanoid.html
 
 ### VRMSchema.HumanoidBoneName
 
