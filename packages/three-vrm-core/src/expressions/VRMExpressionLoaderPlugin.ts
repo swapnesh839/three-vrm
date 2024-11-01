@@ -183,9 +183,13 @@ export class VRMExpressionLoaderPlugin implements GLTFLoaderPlugin {
           // list up every material in `gltf.scene`
           const gltfMaterials: THREE.Material[] = [];
           gltf.scene.traverse((object) => {
-            const material = (object as any).material as THREE.Material | undefined;
+            const material = (object as any).material as THREE.Material | THREE.Material[] | undefined;
             if (material) {
-              gltfMaterials.push(material);
+              if (Array.isArray(material)) {
+                gltfMaterials.push(...material);
+              } else {
+                gltfMaterials.push(material);
+              }
             }
           });
 
