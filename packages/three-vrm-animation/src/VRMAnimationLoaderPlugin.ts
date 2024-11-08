@@ -77,11 +77,11 @@ export class VRMAnimationLoaderPlugin implements GLTFLoaderPlugin {
     const restHipsPosition = new THREE.Vector3();
     hips?.getWorldPosition(restHipsPosition);
 
-    // If the rest hips position is approximately zero,
+    // If the y component of the rest hips position is approximately zero or below,
     // it is considered that the animation violates the VRM T-pose
-    if (restHipsPosition.lengthSq() < 1e-6) {
+    if (restHipsPosition.y < 1e-3) {
       console.warn(
-        'VRMAnimationLoaderPlugin: The loaded VRM Animation violates the VRM T-pose (The rest hips position is approximately zero.)',
+        'VRMAnimationLoaderPlugin: The loaded VRM Animation might violate the VRM T-pose (The y component of the rest hips position is approximately zero or below.)',
       );
     }
 
