@@ -17,7 +17,7 @@
   },
   "scripts": {
     "version": "yarn all",
-    "all": "yarn lint && yarn clean && yarn build && yarn docs",
+    "all": "yarn lint && yarn clean && yarn docs",
     "clean": "rimraf docs/",
     "docs": "typedoc --entryPoints ./types/index.d.ts --out docs",
     "lint": "eslint \"types/**/*.{ts,tsx}\" && prettier \"types/**/*.{ts,tsx}\" --check",
