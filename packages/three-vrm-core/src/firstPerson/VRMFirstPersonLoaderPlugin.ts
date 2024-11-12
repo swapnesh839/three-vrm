@@ -142,10 +142,12 @@ export class VRMFirstPersonLoaderPlugin implements GLTFLoaderPlugin {
       return 'firstPersonOnly';
     } else if (flag === 'ThirdPersonOnly') {
       return 'thirdPersonOnly';
-    } else if (flag === 'Auto') {
-      return 'auto';
-    } else {
+    } else if (flag === 'Both') {
       return 'both';
+    } else {
+      // The default value is 'Auto' even in VRM0
+      // See: https://github.com/vrm-c/UniVRM/blob/07d98e2f1abc528d387f860d2224d0855b0d0b59/Assets/VRM/Runtime/FirstPerson/VRMFirstPerson.cs#L117-L119
+      return 'auto';
     }
   }
 }
