@@ -90,20 +90,15 @@ export class VRMFirstPersonLoaderPlugin implements GLTFLoaderPlugin {
     }
 
     const schemaFirstPerson = extension.firstPerson;
-    if (!schemaFirstPerson) {
-      return null;
-    }
 
     const meshAnnotations: VRMFirstPersonMeshAnnotation[] = [];
     const nodePrimitivesMap = await gltfExtractPrimitivesFromNodes(gltf);
     Array.from(nodePrimitivesMap.entries()).forEach(([nodeIndex, primitives]) => {
-      const annotation = schemaFirstPerson.meshAnnotations
-        ? schemaFirstPerson.meshAnnotations.find((a) => a.node === nodeIndex)
-        : undefined;
+      const annotation = schemaFirstPerson?.meshAnnotations?.find((a) => a.node === nodeIndex);
 
       meshAnnotations.push({
         meshes: primitives,
-        type: annotation?.type ?? 'both',
+        type: annotation?.type ?? 'auto',
       });
     });
 
