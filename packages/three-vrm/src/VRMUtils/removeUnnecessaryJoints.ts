@@ -56,29 +56,29 @@ export function removeUnnecessaryJoints(
   // Iterate over all skinned meshes and collect bones and boneInverses
   for (const mesh of skinnedMeshes) {
     const geometry = mesh.geometry;
-    const attribute = geometry.getAttribute('skinIndex') as THREE.BufferAttribute;
+    const attribute = geometry.getAttribute('skinIndex');
 
     const bones: THREE.Bone[] = []; // new list of bone
     const boneInverses: THREE.Matrix4[] = []; // new list of boneInverse
     const boneIndexMap: { [index: number]: number } = {}; // map of old bone index vs. new bone index
 
     // create a new bone map
-    const array = attribute.array;
-    for (let i = 0; i < array.length; i++) {
-      const index = array[i];
+    for (let i = 0; i < attribute.count; i++) {
+      for (let j = 0; j < attribute.itemSize; j++) {
+        const index = attribute.getComponent(i, j);
 
-      // new skinIndex buffer
-      if (boneIndexMap[index] == null) {
-        boneIndexMap[index] = bones.length;
-        bones.push(mesh.skeleton.bones[index]);
-        boneInverses.push(mesh.skeleton.boneInverses[index]);
+        // new skinIndex buffer
+        if (boneIndexMap[index] == null) {
+          boneIndexMap[index] = bones.length;
+          bones.push(mesh.skeleton.bones[index]);
+          boneInverses.push(mesh.skeleton.boneInverses[index]);
+        }
+
+        attribute.setComponent(i, j, boneIndexMap[index]);
       }
-
-      array[i] = boneIndexMap[index];
     }
 
     // replace with new indices
-    attribute.copyArray(array);
     attribute.needsUpdate = true;
 
     // update boneList
