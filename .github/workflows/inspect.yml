@@ -30,7 +30,7 @@ jobs:
     - name: Build
       run: yarn build
     - name: Upload Builds
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: build
         path: |
@@ -59,7 +59,7 @@ jobs:
     - name: Fetch Deps
       run: yarn install --frozen-lockfile
     - name: Download Builds
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: packages
@@ -88,7 +88,7 @@ jobs:
     - name: Fetch Deps
       run: yarn install --frozen-lockfile
     - name: Download Builds
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: packages
@@ -117,14 +117,14 @@ jobs:
     - name: Fetch Deps
       run: yarn install --frozen-lockfile
     - name: Download Builds
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: packages
     - name: Build Docs
       run: yarn docs
     - name: Upload Docs
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: docs
         path: |
@@ -155,12 +155,12 @@ jobs:
     - name: Fetch Deps
       run: yarn install --frozen-lockfile
     - name: Download Builds
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: build
         path: public/packages
     - name: Download Docs
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
         name: docs
         path: public/packages
