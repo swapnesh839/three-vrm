@@ -23,9 +23,9 @@ export function removeUnnecessaryVertices(root: THREE.Object3D): void {
     const mesh = obj as THREE.Mesh;
     const geometry = mesh.geometry;
 
-    // if the geometry does not have an index buffer it does not need to process
-    const origianlIndex = geometry.index;
-    if (origianlIndex == null) {
+    // if the geometry does not have an index buffer it does not need to be processed
+    const originalIndex = geometry.index;
+    if (originalIndex == null) {
       return;
     }
 
@@ -34,6 +34,41 @@ export function removeUnnecessaryVertices(root: THREE.Object3D): void {
     if (newGeometryAlreadyExisted != null) {
       mesh.geometry = newGeometryAlreadyExisted;
       return;
+    }
+
+    // determine which vertices are used in the geometry
+    const vertexCount = Object.values(geometry.attributes)[0].count;
+    const vertexInUse = new Array(vertexCount);
+    let verticesUsed = 0;
+
+    const originalIndexArray = originalIndex.array;
+    for (let i = 0; i < originalIndexArray.length; i++) {
+      const index = originalIndexArray[i];
+      if (!vertexInUse[index]) {
+        vertexInUse[index] = true;
+        verticesUsed++;
+      }
+    }
+
+    // if the geometry uses all vertices it does not need to be processed
+    if (verticesUsed === vertexCount) {
+      return;
+    }
+
+    /** from original index to new index */
+    const originalIndexNewIndexMap: number[] = [];
+
+    /** from new index to original index */
+    const newIndexOriginalIndexMap: number[] = [];
+
+    // assign new indices
+    let indexHead = 0;
+    for (let i = 0; i < vertexInUse.length; i++) {
+      if (vertexInUse[i]) {
+        const newIndex = indexHead++;
+        originalIndexNewIndexMap[i] = newIndex;
+        newIndexOriginalIndexMap[newIndex] = i;
+      }
     }
 
     const newGeometry = new THREE.BufferGeometry();
@@ -58,29 +93,15 @@ export function removeUnnecessaryVertices(root: THREE.Object3D): void {
     // set to geometryMap
     geometryMap.set(geometry, newGeometry);
 
-    /** from original index to new index */
-    const originalIndexNewIndexMap: number[] = [];
-
-    /** from new index to original index */
-    const newIndexOriginalIndexMap: number[] = [];
-
     // reorganize indices
     {
-      const originalIndexArray = origianlIndex.array;
+      const originalIndexArray = originalIndex.array;
       const newIndexArray = new (originalIndexArray.constructor as any)(originalIndexArray.length);
-
-      let indexHead = 0;
 
       for (let i = 0; i < originalIndexArray.length; i++) {
         const originalIndex = originalIndexArray[i];
 
-        let newIndex = originalIndexNewIndexMap[originalIndex];
-        if (newIndex == null) {
-          originalIndexNewIndexMap[originalIndex] = indexHead;
-          newIndexOriginalIndexMap[indexHead] = originalIndex;
-          newIndex = indexHead;
-          indexHead++;
-        }
+        const newIndex = originalIndexNewIndexMap[originalIndex];
         newIndexArray[i] = newIndex;
       }
 
