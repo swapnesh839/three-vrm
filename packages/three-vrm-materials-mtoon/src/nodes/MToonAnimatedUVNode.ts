@@ -41,6 +41,6 @@ export class MToonAnimatedUVNode extends THREE.TempNode {
     const scroll = THREE.vec2(refUVAnimationScrollXOffset, refUVAnimationScrollYOffset).mul(uvAnimationMask);
     uv = uv.add(scroll);
 
-    return uv.temp('AnimatedUV');
+    return uv.toVar('AnimatedUV');
   }
 }
