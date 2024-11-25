@@ -32,7 +32,7 @@ export class VRMSpringBoneColliderShapePlane extends VRMSpringBoneColliderShape 
     objectRadius: number,
     target: THREE.Vector3,
   ): number {
-    target.copy(this.offset).applyMatrix4(colliderMatrix); // transformed offset
+    target.setFromMatrixPosition(colliderMatrix); // transformed offset
     target.negate().add(objectPosition); // a vector from collider center to object position
 
     _mat3A.getNormalMatrix(colliderMatrix); // convert the collider matrix to the normal matrix

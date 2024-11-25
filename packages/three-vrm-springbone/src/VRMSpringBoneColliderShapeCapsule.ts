@@ -44,8 +44,8 @@ export class VRMSpringBoneColliderShapeCapsule extends VRMSpringBoneColliderShap
     objectRadius: number,
     target: THREE.Vector3,
   ): number {
-    _v3A.copy(this.offset).applyMatrix4(colliderMatrix); // transformed head
-    _v3B.copy(this.tail).applyMatrix4(colliderMatrix); // transformed tail
+    _v3A.setFromMatrixPosition(colliderMatrix); // transformed head
+    _v3B.subVectors(this.tail, this.offset).applyMatrix4(colliderMatrix); // transformed tail
     _v3B.sub(_v3A); // from head to tail
     const lengthSqCapsule = _v3B.lengthSq();
 
@@ -64,13 +64,14 @@ export class VRMSpringBoneColliderShapeCapsule extends VRMSpringBoneColliderShap
       target.sub(_v3B); // from the shaft point to object
     }
 
-    const distance = this.inside
-      ? this.radius - objectRadius - target.length()
-      : target.length() - objectRadius - this.radius;
+    const length = target.length();
+    const distance = this.inside ? this.radius - objectRadius - length : length - objectRadius - this.radius;
 
-    target.normalize(); // convert the delta to the direction
-    if (this.inside) {
-      target.negate(); // if inside, reverse the direction
+    if (distance < 0) {
+      target.multiplyScalar(1 / length); // convert the delta to the direction
+      if (this.inside) {
+        target.negate(); // if inside, reverse the direction
+      }
     }
 
     return distance;

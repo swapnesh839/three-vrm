@@ -283,7 +283,7 @@ export class VRMSpringBoneJoint {
     for (let cg = 0; cg < this.colliderGroups.length; cg++) {
       for (let c = 0; c < this.colliderGroups[cg].colliders.length; c++) {
         const collider = this.colliderGroups[cg].colliders[c];
-        const dist = collider.shape.calculateCollision(collider.matrixWorld, tail, this.settings.hitRadius, _v3A);
+        const dist = collider.shape.calculateCollision(collider.colliderMatrix, tail, this.settings.hitRadius, _v3A);
 
         if (dist < 0.0) {
           // hit

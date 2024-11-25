@@ -64,7 +64,9 @@ describe('VRMSpringBoneColliderShapeSphere', () => {
         offset: new THREE.Vector3(0.0, 0.0, -1.0),
       });
 
-      const colliderMatrix = new THREE.Matrix4().makeTranslation(1.0, 0.0, 0.0);
+      const colliderMatrix = new THREE.Matrix4()
+        .makeTranslation(1.0, 0.0, 0.0)
+        .multiply(new THREE.Matrix4().makeTranslation(shape.offset));
       const objectPosition = new THREE.Vector3(2.0, 1.0, 0.0);
       const objectRadius = 1.0;
 
@@ -81,7 +83,9 @@ describe('VRMSpringBoneColliderShapeSphere', () => {
         offset: new THREE.Vector3(0.0, 1.0, 1.0),
       });
 
-      const colliderMatrix = new THREE.Matrix4().makeRotationX(-0.5 * Math.PI);
+      const colliderMatrix = new THREE.Matrix4()
+        .makeRotationX(-0.5 * Math.PI)
+        .multiply(new THREE.Matrix4().makeTranslation(shape.offset));
       const objectPosition = new THREE.Vector3(-1.0, 1.0, -1.0);
       const objectRadius = 1.0;
 
