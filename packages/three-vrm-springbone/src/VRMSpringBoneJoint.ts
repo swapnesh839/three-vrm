@@ -84,6 +84,26 @@ export class VRMSpringBoneJoint {
   private _worldSpaceBoneLength = 0.0;
 
   /**
+   * Set of dependencies that need to be updated before this joint.
+   */
+  public get dependencies(): Set<THREE.Object3D> {
+    const set = new Set<THREE.Object3D>();
+
+    const parent = this.bone.parent;
+    if (parent) {
+      set.add(parent);
+    }
+
+    for (let cg = 0; cg < this.colliderGroups.length; cg++) {
+      for (let c = 0; c < this.colliderGroups[cg].colliders.length; c++) {
+        set.add(this.colliderGroups[cg].colliders[c]);
+      }
+    }
+
+    return set;
+  }
+
+  /**
    * This springbone will be calculated based on the space relative from this object.
    * If this is `null`, springbone will be calculated in world space.
    */
