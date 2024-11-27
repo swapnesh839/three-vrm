@@ -9,6 +9,8 @@ import * as THREE from 'three';
  * Also, this function might significantly improve the performance of mesh skinning.
  *
  * @param root Root object that will be traversed
+ *
+ * @deprecated `removeUnnecessaryJoints` is deprecated. Use `combineSkeletons` instead. `combineSkeletons` contributes more to the performance improvement. This function will be removed in the next major version.
  */
 export declare function removeUnnecessaryJoints(root: THREE.Object3D, options?: {
     /**
