@@ -41,7 +41,17 @@ export class VRMExpression extends THREE.Object3D {
    */
   public overrideMouth: VRMExpressionOverrideType = 'none';
 
+  /**
+   * Binds that this expression influences.
+   */
   private _binds: VRMExpressionBind[] = [];
+
+  /**
+   * Binds that this expression influences.
+   */
+  public get binds(): readonly VRMExpressionBind[] {
+    return this._binds;
+  }
 
   override readonly type: string | 'VRMExpression';
 
@@ -114,6 +124,13 @@ export class VRMExpression extends THREE.Object3D {
 
   public addBind(bind: VRMExpressionBind): void {
     this._binds.push(bind);
+  }
+
+  public deleteBind(bind: VRMExpressionBind): void {
+    const index = this._binds.indexOf(bind);
+    if (index >= 0) {
+      this._binds.splice(index, 1);
+    }
   }
 
   /**
