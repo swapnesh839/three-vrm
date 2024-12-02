@@ -75,7 +75,7 @@ describe('VRMSpringBoneColliderShapeCapsule', () => {
       });
 
       it('must calculate a collision properly, object is near the head', () => {
-        const colliderMatrix = new THREE.Matrix4();
+        const colliderMatrix = new THREE.Matrix4().makeTranslation(shape.offset);
         const objectPosition = new THREE.Vector3(-2.0, 0.0, 1.0);
         const objectRadius = 1.0;
 
@@ -87,19 +87,19 @@ describe('VRMSpringBoneColliderShapeCapsule', () => {
       });
 
       it('must calculate a collision properly, object is near the tail', () => {
-        const colliderMatrix = new THREE.Matrix4();
+        const colliderMatrix = new THREE.Matrix4().makeTranslation(shape.offset);
         const objectPosition = new THREE.Vector3(3.0, 0.0, 0.0);
-        const objectRadius = 1.0;
+        const objectRadius = 2.0;
 
         const dir = new THREE.Vector3();
         const distSq = shape.calculateCollision(colliderMatrix, objectPosition, objectRadius, dir);
 
-        expect(distSq).toBeCloseTo(0.44949); // sqrt(6) - 2
+        expect(distSq).toBeCloseTo(-0.55051); // sqrt(6) - 3
         expect(dir).toBeCloseToVector3(new THREE.Vector3(2.0, -1.0, -1.0).normalize());
       });
 
       it('must calculate a collision properly, object is between two ends', () => {
-        const colliderMatrix = new THREE.Matrix4();
+        const colliderMatrix = new THREE.Matrix4().makeTranslation(shape.offset);
         const objectPosition = new THREE.Vector3(0.0, 0.0, 0.0);
         const objectRadius = 1.0;
 

@@ -1,5 +1,4 @@
 import * as THREE from 'three';
-import { mat4InvertCompat } from './utils/mat4InvertCompat';
 import { Matrix4InverseCache } from './utils/Matrix4InverseCache';
 import type { VRMSpringBoneColliderGroup } from './VRMSpringBoneColliderGroup';
 import type { VRMSpringBoneJointSettings } from './VRMSpringBoneJointSettings';
@@ -13,7 +12,6 @@ const IDENTITY_MATRIX4 = new THREE.Matrix4();
 // 計算中の一時保存用変数（一度インスタンスを作ったらあとは使い回す）
 const _v3A = new THREE.Vector3();
 const _v3B = new THREE.Vector3();
-const _v3C = new THREE.Vector3();
 
 /**
  * A temporary variable which is used in `update`
@@ -23,16 +21,9 @@ const _worldSpacePosition = new THREE.Vector3();
 /**
  * A temporary variable which is used in `update`
  */
-const _centerSpacePosition = new THREE.Vector3();
-
-/**
- * A temporary variable which is used in `update`
- */
 const _nextTail = new THREE.Vector3();
 
-const _quatA = new THREE.Quaternion();
 const _matA = new THREE.Matrix4();
-const _matB = new THREE.Matrix4();
 
 /**
  * A class represents a single joint of a spring bone.
@@ -82,6 +73,26 @@ export class VRMSpringBoneJoint {
    * It's same as local unit length unless there are scale transformations in the world space.
    */
   private _worldSpaceBoneLength = 0.0;
+
+  /**
+   * Set of dependencies that need to be updated before this joint.
+   */
+  public get dependencies(): Set<THREE.Object3D> {
+    const set = new Set<THREE.Object3D>();
+
+    const parent = this.bone.parent;
+    if (parent) {
+      set.add(parent);
+    }
+
+    for (let cg = 0; cg < this.colliderGroups.length; cg++) {
+      for (let c = 0; c < this.colliderGroups[cg].colliders.length; c++) {
+        set.add(this.colliderGroups[cg].colliders[c]);
+      }
+    }
+
+    return set;
+  }
 
   /**
    * This springbone will be calculated based on the space relative from this object.
@@ -184,7 +195,7 @@ export class VRMSpringBoneJoint {
     }
 
     // copy the child position to tails
-    const matrixWorldToCenter = this._getMatrixWorldToCenter(_matA);
+    const matrixWorldToCenter = this._getMatrixWorldToCenter();
     this.bone.localToWorld(this._currentTail.copy(this._initialLocalChildPosition)).applyMatrix4(matrixWorldToCenter);
     this._prevTail.copy(this._currentTail);
 
@@ -204,7 +215,7 @@ export class VRMSpringBoneJoint {
     this.bone.matrixWorld.multiplyMatrices(this._parentMatrixWorld, this.bone.matrix);
 
     // Apply updated position to tail states
-    const matrixWorldToCenter = this._getMatrixWorldToCenter(_matA);
+    const matrixWorldToCenter = this._getMatrixWorldToCenter();
     this.bone.localToWorld(this._currentTail.copy(this._initialLocalChildPosition)).applyMatrix4(matrixWorldToCenter);
     this._prevTail.copy(this._currentTail);
   }
@@ -221,64 +232,42 @@ export class VRMSpringBoneJoint {
     // Update the _worldSpaceBoneLength
     this._calcWorldSpaceBoneLength();
 
-    // Get bone position in center space
-    _worldSpacePosition.setFromMatrixPosition(this.bone.matrixWorld);
-    let matrixWorldToCenter = this._getMatrixWorldToCenter(_matA);
-    _centerSpacePosition.copy(_worldSpacePosition).applyMatrix4(matrixWorldToCenter);
-    const quatWorldToCenter = _quatA.setFromRotationMatrix(matrixWorldToCenter);
-
-    // Get parent matrix in center space
-    const centerSpaceParentMatrix = _matB.copy(matrixWorldToCenter).multiply(this._parentMatrixWorld);
-
-    // Get boneAxis in center space
-    const centerSpaceBoneAxis = _v3B
+    // Get boneAxis in world space
+    const worldSpaceBoneAxis = _v3B
       .copy(this._boneAxis)
-      .applyMatrix4(this._initialLocalMatrix)
-      .applyMatrix4(centerSpaceParentMatrix)
-      .sub(_centerSpacePosition)
-      .normalize();
-
-    // gravity in center space
-    const centerSpaceGravity = _v3C.copy(this.settings.gravityDir).applyQuaternion(quatWorldToCenter).normalize();
-
-    const matrixCenterToWorld = this._getMatrixCenterToWorld(_matA);
+      .transformDirection(this._initialLocalMatrix)
+      .transformDirection(this._parentMatrixWorld);
 
     // verlet積分で次の位置を計算
     _nextTail
+      // Determine inertia in center space
       .copy(this._currentTail)
-      .add(
-        _v3A
-          .copy(this._currentTail)
-          .sub(this._prevTail)
-          .multiplyScalar(1 - this.settings.dragForce),
-      ) // 前フレームの移動を継続する(減衰もあるよ)
-      .add(_v3A.copy(centerSpaceBoneAxis).multiplyScalar(this.settings.stiffness * delta)) // 親の回転による子ボーンの移動目標
-      .add(_v3A.copy(centerSpaceGravity).multiplyScalar(this.settings.gravityPower * delta)) // 外力による移動量
-      .applyMatrix4(matrixCenterToWorld); // tailをworld spaceに戻す
+      .add(_v3A.subVectors(this._currentTail, this._prevTail).multiplyScalar(1 - this.settings.dragForce)) // 前フレームの移動を継続する(減衰もあるよ)
+      // Convert center space to world space
+      .applyMatrix4(this._getMatrixCenterToWorld()) // tailをworld spaceに戻す
+      // Apply stiffness and gravity in world space
+      .addScaledVector(worldSpaceBoneAxis, this.settings.stiffness * delta) // 親の回転による子ボーンの移動目標
+      .addScaledVector(this.settings.gravityDir, this.settings.gravityPower * delta); // 外力による移動量
 
     // normalize bone length
+    _worldSpacePosition.setFromMatrixPosition(this.bone.matrixWorld);
     _nextTail.sub(_worldSpacePosition).normalize().multiplyScalar(this._worldSpaceBoneLength).add(_worldSpacePosition);
 
     // Collisionで移動
     this._collision(_nextTail);
 
     // update prevTail and currentTail
-    matrixWorldToCenter = this._getMatrixWorldToCenter(_matA);
-
     this._prevTail.copy(this._currentTail);
-    this._currentTail.copy(_v3A.copy(_nextTail).applyMatrix4(matrixWorldToCenter));
+    this._currentTail.copy(_nextTail).applyMatrix4(this._getMatrixWorldToCenter());
 
     // Apply rotation, convert vector3 thing into actual quaternion
     // Original UniVRM is doing center unit calculus at here but we're gonna do this on local unit
-    const worldSpaceInitialMatrixInv = mat4InvertCompat(
-      _matA.copy(this._parentMatrixWorld).multiply(this._initialLocalMatrix),
-    );
-    const applyRotation = _quatA.setFromUnitVectors(
-      this._boneAxis,
-      _v3A.copy(_nextTail).applyMatrix4(worldSpaceInitialMatrixInv).normalize(),
-    );
-
-    this.bone.quaternion.copy(this._initialLocalRotation).multiply(applyRotation);
+    const worldSpaceInitialMatrixInv = _matA
+      .multiplyMatrices(this._parentMatrixWorld, this._initialLocalMatrix)
+      .invert();
+    this.bone.quaternion
+      .setFromUnitVectors(this._boneAxis, _v3A.copy(_nextTail).applyMatrix4(worldSpaceInitialMatrixInv).normalize())
+      .premultiply(this._initialLocalRotation);
 
     // We need to update its matrixWorld manually, since we tweaked the bone by our hand
     this.bone.updateMatrix();
@@ -291,19 +280,22 @@ export class VRMSpringBoneJoint {
    * @param tail The tail you want to process
    */
   private _collision(tail: THREE.Vector3): void {
-    this.colliderGroups.forEach((colliderGroup) => {
-      colliderGroup.colliders.forEach((collider) => {
-        const dist = collider.shape.calculateCollision(collider.matrixWorld, tail, this.settings.hitRadius, _v3A);
+    for (let cg = 0; cg < this.colliderGroups.length; cg++) {
+      for (let c = 0; c < this.colliderGroups[cg].colliders.length; c++) {
+        const collider = this.colliderGroups[cg].colliders[c];
+        const dist = collider.shape.calculateCollision(collider.colliderMatrix, tail, this.settings.hitRadius, _v3A);
 
         if (dist < 0.0) {
           // hit
-          tail.add(_v3A.multiplyScalar(-dist));
+          tail.addScaledVector(_v3A, -dist);
 
           // normalize bone length
-          tail.sub(_worldSpacePosition).normalize().multiplyScalar(this._worldSpaceBoneLength).add(_worldSpacePosition);
+          tail.sub(_worldSpacePosition);
+          const length = tail.length();
+          tail.multiplyScalar(this._worldSpaceBoneLength / length).add(_worldSpacePosition);
         }
-      });
-    });
+      }
+    }
   }
 
   /**
@@ -325,29 +317,15 @@ export class VRMSpringBoneJoint {
 
   /**
    * Create a matrix that converts center space into world space.
-   * @param target Target matrix
    */
-  private _getMatrixCenterToWorld(target: THREE.Matrix4): THREE.Matrix4 {
-    if (this._center) {
-      target.copy(this._center.matrixWorld);
-    } else {
-      target.identity();
-    }
-
-    return target;
+  private _getMatrixCenterToWorld(): THREE.Matrix4 {
+    return this._center ? this._center.matrixWorld : IDENTITY_MATRIX4;
   }
 
   /**
    * Create a matrix that converts world space into center space.
-   * @param target Target matrix
    */
-  private _getMatrixWorldToCenter(target: THREE.Matrix4): THREE.Matrix4 {
-    if (this._center) {
-      target.copy((this._center.userData.inverseCacheProxy as Matrix4InverseCache).inverse);
-    } else {
-      target.identity();
-    }
-
-    return target;
+  private _getMatrixWorldToCenter(): THREE.Matrix4 {
+    return this._center ? (this._center.userData.inverseCacheProxy as Matrix4InverseCache).inverse : IDENTITY_MATRIX4;
   }
 }

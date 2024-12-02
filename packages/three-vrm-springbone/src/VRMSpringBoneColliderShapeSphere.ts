@@ -1,6 +1,8 @@
 import * as THREE from 'three';
 import { VRMSpringBoneColliderShape } from './VRMSpringBoneColliderShape';
 
+const _v3A = new THREE.Vector3();
+
 export class VRMSpringBoneColliderShapeSphere extends VRMSpringBoneColliderShape {
   public get type(): 'sphere' {
     return 'sphere';
@@ -35,16 +37,16 @@ export class VRMSpringBoneColliderShapeSphere extends VRMSpringBoneColliderShape
     objectRadius: number,
     target: THREE.Vector3,
   ): number {
-    target.copy(this.offset).applyMatrix4(colliderMatrix); // transformed offset
-    target.negate().add(objectPosition); // a vector from collider center to object position
+    target.subVectors(objectPosition, _v3A.setFromMatrixPosition(colliderMatrix));
 
-    const distance = this.inside
-      ? this.radius - objectRadius - target.length()
-      : target.length() - objectRadius - this.radius;
+    const length = target.length();
+    const distance = this.inside ? this.radius - objectRadius - length : length - objectRadius - this.radius;
 
-    target.normalize(); // convert the delta to the direction
-    if (this.inside) {
-      target.negate(); // if inside, reverse the direction
+    if (distance < 0) {
+      target.multiplyScalar(1 / length); // convert the delta to the direction
+      if (this.inside) {
+        target.negate(); // if inside, reverse the direction
+      }
     }
 
     return distance;
