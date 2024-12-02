@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { VRMCore, VRMExpressionMorphTargetBind } from '@pixiv/three-vrm-core';
-import { temp } from 'three/webgpu';
 
 /**
  * Traverse an entire tree and collect meshes.
@@ -21,32 +20,22 @@ function collectMeshes(scene: THREE.Group): Set<THREE.Mesh> {
 }
 
 function combineMorph(
-  geometry: THREE.BufferGeometry,
+  positionAttributes: (THREE.BufferAttribute | THREE.InterleavedBufferAttribute)[],
   binds: Iterable<VRMExpressionMorphTargetBind>,
-): [THREE.BufferAttribute, THREE.BufferAttribute] {
-  const newPArr = new Float32Array(geometry.attributes.position.count * 3);
-  const newNArr = new Float32Array(geometry.attributes.normal.count * 3);
-  for (const bind of binds) {
-    const srcP = geometry.morphAttributes.position[bind.index];
-    for (let i = 0; i < srcP.count; i++) {
-      newPArr[i * 3 + 0] += srcP.getX(i) * bind.weight;
-      newPArr[i * 3 + 1] += srcP.getY(i) * bind.weight;
-      newPArr[i * 3 + 2] += srcP.getZ(i) * bind.weight;
-    }
+): THREE.BufferAttribute {
+  const newArray = new Float32Array(positionAttributes[0].count * 3);
 
-    const srcN = geometry.morphAttributes.normal?.[bind.index];
-    if (srcN != null) {
-      for (let i = 0; i < srcN.count; i++) {
-        newNArr[i * 3 + 0] += srcN.getX(i) * bind.weight;
-        newNArr[i * 3 + 1] += srcN.getY(i) * bind.weight;
-        newNArr[i * 3 + 2] += srcN.getZ(i) * bind.weight;
-      }
+  for (const bind of binds) {
+    const srcP = positionAttributes[bind.index];
+    for (let i = 0; i < srcP.count; i++) {
+      newArray[i * 3 + 0] += srcP.getX(i) * bind.weight;
+      newArray[i * 3 + 1] += srcP.getY(i) * bind.weight;
+      newArray[i * 3 + 2] += srcP.getZ(i) * bind.weight;
     }
   }
 
-  const newP = new THREE.BufferAttribute(newPArr, 3);
-  const newN = new THREE.BufferAttribute(newNArr, 3);
-  return [newP, newN];
+  const newAttribute = new THREE.BufferAttribute(newArray, 3);
+  return newAttribute;
 }
 
 /**
@@ -95,42 +84,53 @@ export function combineMorphs(vrm: VRMCore): void {
     const geometry = mesh.geometry.clone();
     mesh.geometry = geometry;
 
-    const morphAttributes: typeof geometry.morphAttributes = {
-      position: [],
-      normal: [],
-    };
+    const hasPMorph = geometry.morphAttributes.position != null;
+    const hasNMorph = geometry.morphAttributes.normal != null;
 
+    const morphAttributes: typeof geometry.morphAttributes = {};
     const morphTargetDictionary: typeof mesh.morphTargetDictionary = {};
     const morphTargetInfluences: typeof mesh.morphTargetInfluences = [];
 
-    const nameBindSetMap = new Map<string, Set<VRMExpressionMorphTargetBind>>();
-    for (const [name, bind] of bindList) {
-      let set = nameBindSetMap.get(name);
-      if (set == null) {
-        set = new Set<VRMExpressionMorphTargetBind>();
-        nameBindSetMap.set(name, set);
+    if (hasPMorph || hasNMorph) {
+      if (hasPMorph) {
+        morphAttributes.position = [];
       }
-      set.add(bind);
-    }
+      if (hasNMorph) {
+        morphAttributes.normal = [];
+      }
 
-    let i = 0;
-    for (const [name, bindSet] of nameBindSetMap) {
-      const [newP, newN] = combineMorph(geometry, bindSet);
-      morphAttributes.position[i] = newP;
-      morphAttributes.normal[i] = newN;
+      const nameBindSetMap = new Map<string, Set<VRMExpressionMorphTargetBind>>();
+      for (const [name, bind] of bindList) {
+        let set = nameBindSetMap.get(name);
+        if (set == null) {
+          set = new Set<VRMExpressionMorphTargetBind>();
+          nameBindSetMap.set(name, set);
+        }
+        set.add(bind);
+      }
 
-      expressionMap?.[name].addBind(
-        new VRMExpressionMorphTargetBind({
-          index: i,
-          weight: 1.0,
-          primitives: [mesh],
-        }),
-      );
+      let i = 0;
+      for (const [name, bindSet] of nameBindSetMap) {
+        if (hasPMorph) {
+          morphAttributes.position[i] = combineMorph(geometry.morphAttributes.position, bindSet);
+        }
+        if (hasNMorph) {
+          morphAttributes.normal[i] = combineMorph(geometry.morphAttributes.normal, bindSet);
+        }
 
-      morphTargetDictionary[name] = i;
-      morphTargetInfluences.push(0.0);
+        expressionMap?.[name].addBind(
+          new VRMExpressionMorphTargetBind({
+            index: i,
+            weight: 1.0,
+            primitives: [mesh],
+          }),
+        );
 
-      i++;
+        morphTargetDictionary[name] = i;
+        morphTargetInfluences.push(0.0);
+
+        i++;
+      }
     }
 
     geometry.morphAttributes = morphAttributes;
