@@ -122,10 +122,20 @@ export class VRMExpression extends THREE.Object3D {
     this.visible = false;
   }
 
+  /**
+   * Add an expression bind to the expression.
+   *
+   * @param bind A bind to add
+   */
   public addBind(bind: VRMExpressionBind): void {
     this._binds.push(bind);
   }
 
+  /**
+   * Delete an expression bind from the expression.
+   *
+   * @param bind A bind to delete
+   */
   public deleteBind(bind: VRMExpressionBind): void {
     const index = this._binds.indexOf(bind);
     if (index >= 0) {
