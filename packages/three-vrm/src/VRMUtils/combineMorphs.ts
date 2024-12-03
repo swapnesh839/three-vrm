@@ -22,15 +22,27 @@ function collectMeshes(scene: THREE.Group): Set<THREE.Mesh> {
 function combineMorph(
   positionAttributes: (THREE.BufferAttribute | THREE.InterleavedBufferAttribute)[],
   binds: Iterable<VRMExpressionMorphTargetBind>,
+  morphTargetsRelative: boolean,
 ): THREE.BufferAttribute {
   const newArray = new Float32Array(positionAttributes[0].count * 3);
+  let weightSum = 0.0;
+
+  if (morphTargetsRelative) {
+    weightSum = 1.0;
+  } else {
+    for (const bind of binds) {
+      weightSum += bind.weight;
+    }
+  }
 
   for (const bind of binds) {
-    const srcP = positionAttributes[bind.index];
-    for (let i = 0; i < srcP.count; i++) {
-      newArray[i * 3 + 0] += srcP.getX(i) * bind.weight;
-      newArray[i * 3 + 1] += srcP.getY(i) * bind.weight;
-      newArray[i * 3 + 2] += srcP.getZ(i) * bind.weight;
+    const src = positionAttributes[bind.index];
+    const weight = bind.weight / weightSum;
+
+    for (let i = 0; i < src.count; i++) {
+      newArray[i * 3 + 0] += src.getX(i) * weight;
+      newArray[i * 3 + 1] += src.getY(i) * weight;
+      newArray[i * 3 + 2] += src.getZ(i) * weight;
     }
   }
 
@@ -83,6 +95,7 @@ export function combineMorphs(vrm: VRMCore): void {
 
     const geometry = mesh.geometry.clone();
     mesh.geometry = geometry;
+    const morphTargetsRelative = geometry.morphTargetsRelative;
 
     const hasPMorph = geometry.morphAttributes.position != null;
     const hasNMorph = geometry.morphAttributes.normal != null;
@@ -112,10 +125,10 @@ export function combineMorphs(vrm: VRMCore): void {
       let i = 0;
       for (const [name, bindSet] of nameBindSetMap) {
         if (hasPMorph) {
-          morphAttributes.position[i] = combineMorph(geometry.morphAttributes.position, bindSet);
+          morphAttributes.position[i] = combineMorph(geometry.morphAttributes.position, bindSet, morphTargetsRelative);
         }
         if (hasNMorph) {
-          morphAttributes.normal[i] = combineMorph(geometry.morphAttributes.normal, bindSet);
+          morphAttributes.normal[i] = combineMorph(geometry.morphAttributes.normal, bindSet, morphTargetsRelative);
         }
 
         expressionMap?.[name].addBind(
