@@ -51,6 +51,11 @@ function combineMorph(
 }
 
 /**
+ * A map from expression names to a set of morph target binds.
+ */
+type NameBindSetMap = Map<string, Set<VRMExpressionMorphTargetBind>>;
+
+/**
  * Combine morph targets by VRM expressions.
  *
  * This function prevents crashes caused by the limitation of the number of morph targets, especially on mobile devices.
@@ -61,7 +66,7 @@ export function combineMorphs(vrm: VRMCore): void {
   const meshes = collectMeshes(vrm.scene);
 
   // Iterate over all expressions and check which morph targets are used
-  const meshBindListMap = new Map<THREE.Mesh, [string, VRMExpressionMorphTargetBind][]>();
+  const meshNameBindSetMapMap = new Map<THREE.Mesh, NameBindSetMap>();
 
   const expressionMap = vrm.expressionManager?.expressionMap;
   if (expressionMap != null) {
@@ -71,9 +76,19 @@ export function combineMorphs(vrm: VRMCore): void {
         if (bind instanceof VRMExpressionMorphTargetBind) {
           if (bind.weight !== 0.0) {
             for (const mesh of bind.primitives) {
-              const bindList = meshBindListMap.get(mesh) ?? [];
-              bindList.push([expressionName, bind]);
-              meshBindListMap.set(mesh, bindList);
+              let nameBindSetMap = meshNameBindSetMapMap.get(mesh);
+              if (nameBindSetMap == null) {
+                nameBindSetMap = new Map();
+                meshNameBindSetMapMap.set(mesh, nameBindSetMap);
+              }
+
+              let bindSet = nameBindSetMap.get(expressionName);
+              if (bindSet == null) {
+                bindSet = new Set();
+                nameBindSetMap.set(expressionName, bindSet);
+              }
+
+              bindSet.add(bind);
             }
           }
           bindsToDeleteSet.add(bind);
@@ -88,8 +103,8 @@ export function combineMorphs(vrm: VRMCore): void {
 
   // Combine morphs
   for (const mesh of meshes) {
-    const bindList = meshBindListMap.get(mesh);
-    if (bindList == null) {
+    const nameBindSetMap = meshNameBindSetMapMap.get(mesh);
+    if (nameBindSetMap == null) {
       continue;
     }
 
@@ -110,16 +125,6 @@ export function combineMorphs(vrm: VRMCore): void {
       }
       if (hasNMorph) {
         morphAttributes.normal = [];
-      }
-
-      const nameBindSetMap = new Map<string, Set<VRMExpressionMorphTargetBind>>();
-      for (const [name, bind] of bindList) {
-        let set = nameBindSetMap.get(name);
-        if (set == null) {
-          set = new Set<VRMExpressionMorphTargetBind>();
-          nameBindSetMap.set(name, set);
-        }
-        set.add(bind);
       }
 
       let i = 0;
